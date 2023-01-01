@@ -1,0 +1,2 @@
+# cal-sync-magic
+calendar
