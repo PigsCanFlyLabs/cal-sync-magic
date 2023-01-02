@@ -1,6 +1,8 @@
-from django.db import models
 from datetime import datetime
+
 from django.contrib.auth.models import User
+from django.db import models
+
 
 class GoogleAccount(models.Model):
     account_id = models.AutoField(primary_key=True)
