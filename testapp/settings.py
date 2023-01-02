@@ -17,3 +17,10 @@ ROOT_URLCONF = "testapp.urls"
 DEBUG = True
 
 STATIC_URL = "/static/" 
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(os.path.dirname(__file__), "database.db"),
+    }
+}
