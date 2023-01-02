@@ -6,16 +6,16 @@ on:
       - master
     pull_request:
       - '*'
-  jobs:
-    tests:
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          python: ['3.9', '3.10']
-          django: ['4.0', '4.1']
-          include:
-            - python: '3.9'
-              django: '4.0'
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.9', '3.10']
+        django: ['4.0', '4.1']
+        include:
+          - python: '3.9'
+            django: '4.0'
      
     name: Run the test suite (Python ${{ matrix.python }}, Django ${{ matrix.django }})
     steps:
