@@ -5,18 +5,15 @@ from django.db import models
 
 
 class GoogleAccount(models.Model):
-    account_id = models.AutoField(primary_key=True)
+    account_id = models.AutoField(primary_key=True, null=False)
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
     )
-    token = models.CharField(max_length=250, null=False)
-    refresh_token = models.CharField(max_length=250, null=False)
-    token_uri = models.CharField(max_length=250, null=False)
-    client_id = models.CharField(max_length=250, null=False)
-    client_secret = models.CharField(max_length=250, null=False)
-    scopes = models.CharField(max_length=250, null=False)
+    google_user_email = models.CharField(max_length=250, null=False)
+    credentials = models.CharField(max_length=1000, null=False)
     last_refreshed = models.DateTimeField(default=datetime.now)
+    unique_together = ["user", "google_user_email"]
 
 
 class UserCalendar(models.Model):

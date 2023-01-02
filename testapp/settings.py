@@ -24,3 +24,7 @@ DATABASES = {
         "NAME": os.path.join(os.path.dirname(__file__), "database.db"),
     }
 }
+
+GOOGLE_CLIENT_SECRETS_FILE = os.getenv(
+    "GOOGLE_CLIENT_SECRETS_FILE",
+    "/secret/google_client.json")
