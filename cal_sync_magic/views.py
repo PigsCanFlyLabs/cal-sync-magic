@@ -12,7 +12,8 @@ from googleapiclient.discovery import build
 # Google related views
 # See https://developers.google.com/identity/protocols/oauth2/web-server#python
 scopes = ["https://www.googleapis.com/auth/calendar.events",
-          "https://www.googleapis.com/auth/userinfo.email"]
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/calendar.calendarlist"]
 API_SERVICE_NAME = "calendar"
 API_VERSION = "v3"
 

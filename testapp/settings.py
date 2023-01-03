@@ -27,7 +27,7 @@ DATABASES = {
 
 GOOGLE_CLIENT_SECRETS_FILE = os.getenv(
     "GOOGLE_CLIENT_SECRETS_FILE",
-    "google_client.json")
+    "client_secret.json")
 
 AUTHENTICATION_BACKENDS =  ['django.contrib.auth.backends.ModelBackend']
 
