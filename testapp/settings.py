@@ -27,4 +27,20 @@ DATABASES = {
 
 GOOGLE_CLIENT_SECRETS_FILE = os.getenv(
     "GOOGLE_CLIENT_SECRETS_FILE",
-    "/secret/google_client.json")
+    "google_client.json")
+
+AUTHENTICATION_BACKENDS =  ['django.contrib.auth.backends.ModelBackend']
+
+SECRET_KEY = "donotusethiskey"
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+SERVER_NAME = 'localhost'

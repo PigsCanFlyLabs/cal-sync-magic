@@ -1,7 +1,12 @@
-from django.urls import redirect, reverse
+from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 
+import google_auth_oauthlib
 from googleapiclient.discovery import build
 
 # Google related views
@@ -11,11 +16,11 @@ scopes = ["https://www.googleapis.com/auth/calendar.events",
 API_SERVICE_NAME = "calendar"
 API_VERSION = "v3"
 
-class GoogleAuthView(View):
-    def get(request):
+class GoogleAuthView(LoginRequiredMixin, View):
+    def get(self, request):
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-            settings.GOOGLE_CLIENT_SECRETS_FILE, scopes=SCOPES)
-        flow.redirect_uri = reverse("google-oauth-callback")
+            settings.GOOGLE_CLIENT_SECRETS_FILE, scopes=scopes)
+        flow.redirect_uri = str(request.build_absolute_uri(reverse("google-oauth-callback")))
         authorization_url, state = flow.authorization_url(
             # Enable offline access so that you can refresh an access token without
             # re-prompting the user for permission. Recommended for web server apps.
@@ -26,12 +31,12 @@ class GoogleAuthView(View):
         # Redirect the user to the authorization url
         return redirect(authorization_url)
 
-class GoogleCallBackView(View):
-    def get(request):
+class GoogleCallBackView(LoginRequiredMixin, View):
+    def get(self, request):
         state = request.session['google_auth_state']
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
             CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
-        flow.redirect_uri = reverse("google-oauth-callback")
+        flow.redirect_uri = request.build_absolute_uri(reverse("google-oauth-callback"))
         authorization_response = request.GET.get("url")
         flow.fetch_token(authorization_response=authorization_response)
         credentials = flow.credentials
@@ -46,8 +51,8 @@ class GoogleCallBackView(View):
                 "last_refreshed": datetime.now()})
         return redirct(reverse("config-sync"))
 
-class ConfigureSyncs(View):
-    def get(request):
-        return "farts"
+class ConfigureSyncs(LoginRequiredMixin, View):
+    def get(self, request):
+        return HttpResponse("farts")
         
 

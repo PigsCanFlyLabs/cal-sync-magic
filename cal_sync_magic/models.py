@@ -1,8 +1,9 @@
 from datetime import datetime
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db import models
 
+User = get_user_model()
 
 class GoogleAccount(models.Model):
     account_id = models.AutoField(primary_key=True, null=False)
@@ -26,7 +27,7 @@ class UserCalendar(models.Model):
         null=False)
     internal_calendar_id = models.AutoField(primary_key=True)
     google_account = models.ForeignKey(GoogleAccount, on_delete=models.CASCADE, null=False)
-    google_calendar_id = models.CharFIeld(max_length=500, null=False)
+    google_calendar_id = models.CharField(max_length=500, null=False)
 
     class Meta:
         app_label = "cal_sync_magic"
