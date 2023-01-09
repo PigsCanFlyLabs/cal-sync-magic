@@ -40,8 +40,7 @@ if not os.path.exists(GOOGLE_CLIENT_SECRETS_FILE):
             f.write(secret)
         print(f"Success! Wrote {GOOGLE_CLIENT_SECRETS_FILE}")
     except Exception as e:
-        print(f"Error writing out secret {e}")
-        pass
+        raise Exception(f"Error writing out secret {e}")
 
 AUTHENTICATION_BACKENDS =  ['django.contrib.auth.backends.ModelBackend']
 
