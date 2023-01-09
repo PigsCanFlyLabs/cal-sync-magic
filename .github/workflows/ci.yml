@@ -31,3 +31,4 @@ jobs:
         run: tox
         env:
           DJANGO: ${{ matrix.django }}
+          GOOGLE_CLIENT_SECRET_TEXT: ${{ secrets.GOOGLE_CLIENT_SECRET_TEXT }}
