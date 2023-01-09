@@ -29,6 +29,15 @@ GOOGLE_CLIENT_SECRETS_FILE = os.getenv(
     "GOOGLE_CLIENT_SECRETS_FILE",
     "client_secret.json")
 
+# If we don't have a secret file but we have the text make it.
+if not os.path.exists(GOOGLE_CLIENT_SECRETS_FILE):
+    try:
+        secret = os.getenv("GOOGLE_CLIENT_SECRET_TEXT")
+        with open(GOOGLE_CLIENT_SECRETS_FILE) as f:
+            f.write(secret)
+    except:
+        pass
+
 AUTHENTICATION_BACKENDS =  ['django.contrib.auth.backends.ModelBackend']
 
 SECRET_KEY = "donotusethiskey"
