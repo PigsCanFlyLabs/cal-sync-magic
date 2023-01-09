@@ -32,7 +32,10 @@ GOOGLE_CLIENT_SECRETS_FILE = os.getenv(
 # If we don't have a secret file but we have the text make it.
 if not os.path.exists(GOOGLE_CLIENT_SECRETS_FILE):
     try:
+        import json
         secret = os.getenv("GOOGLE_CLIENT_SECRET_TEXT")
+        farts = json.loads(secret)
+        assert "web" in farts
         with open(GOOGLE_CLIENT_SECRETS_FILE, 'w') as f:
             f.write(secret)
         print(f"Success! Wrote {GOOGLE_CLIENT_SECRETS_FILE}")
