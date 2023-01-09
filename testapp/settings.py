@@ -35,7 +35,9 @@ if not os.path.exists(GOOGLE_CLIENT_SECRETS_FILE):
         secret = os.getenv("GOOGLE_CLIENT_SECRET_TEXT")
         with open(GOOGLE_CLIENT_SECRETS_FILE) as f:
             f.write(secret)
-    except:
+        print(f"Success! Wrote {GOOGLE_CLIENT_SECRETS_FILE}")
+    except Exception as e:
+        print(f"Error writing out secret {e}")
         pass
 
 AUTHENTICATION_BACKENDS =  ['django.contrib.auth.backends.ModelBackend']
