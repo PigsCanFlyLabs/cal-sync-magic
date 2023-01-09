@@ -31,4 +31,5 @@ jobs:
         run: tox
         env:
           DJANGO: ${{ matrix.django }}
+          FARTS: "farts"
           GOOGLE_CLIENT_SECRETS_TEXT: ${{ secrets.GOOGLE_CLIENT_SECRETS_TEXT }}

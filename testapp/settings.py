@@ -33,6 +33,7 @@ GOOGLE_CLIENT_SECRETS_FILE = os.getenv(
 if not os.path.exists(GOOGLE_CLIENT_SECRETS_FILE):
     try:
         import json
+        print(os.getenv("FARTS"))
         secret = os.getenv("GOOGLE_CLIENT_SECRETS_TEXT").decode("utf-8")
         farts = json.loads(secret)
         assert "web" in farts
