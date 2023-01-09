@@ -33,7 +33,7 @@ GOOGLE_CLIENT_SECRETS_FILE = os.getenv(
 if not os.path.exists(GOOGLE_CLIENT_SECRETS_FILE):
     try:
         secret = os.getenv("GOOGLE_CLIENT_SECRET_TEXT")
-        with open(GOOGLE_CLIENT_SECRETS_FILE) as f:
+        with open(GOOGLE_CLIENT_SECRETS_FILE, 'w') as f:
             f.write(secret)
         print(f"Success! Wrote {GOOGLE_CLIENT_SECRETS_FILE}")
     except Exception as e:
