@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -54,6 +54,8 @@ class GoogleCallBackView(LoginRequiredMixin, View):
 
 class ConfigureSyncs(LoginRequiredMixin, View):
     def get(self, request):
-        return HttpResponse("farts")
-        
-
+        calendars = UserCalendars.get(user == request.user)
+        syncs = SyncConfigs.get(user == request.user)
+        return render(request, 'configure_sync.html', context={
+            'title': "Configure calendar syncing"
+            })

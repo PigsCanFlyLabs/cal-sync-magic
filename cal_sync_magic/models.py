@@ -34,6 +34,10 @@ class UserCalendar(models.Model):
 
 
 class SyncConfigs(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=False)
     src_calendars = models.ManyToManyField(
         'UserCalendar', related_name='src_calendars')
     sink_calendars = models.ManyToManyField(
