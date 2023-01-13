@@ -9,6 +9,8 @@ from django.views import View
 import google_auth_oauthlib
 from googleapiclient.discovery import build
 
+from cal_sync_magic.models import *
+
 # Google related views
 # See https://developers.google.com/identity/protocols/oauth2/web-server#python
 scopes = ["https://www.googleapis.com/auth/calendar.events",
@@ -54,8 +56,8 @@ class GoogleCallBackView(LoginRequiredMixin, View):
 
 class ConfigureSyncs(LoginRequiredMixin, View):
     def get(self, request):
-        calendars = UserCalendars.get(user == request.user)
-        syncs = SyncConfigs.get(user == request.user)
+        calendars = UserCalendar.objects.filter(user = request.user)
+        syncs = SyncConfigs.objects.filter(user = request.user)
         return render(request, 'configure_sync.html', context={
             'title': "Configure calendar syncing"
             })
