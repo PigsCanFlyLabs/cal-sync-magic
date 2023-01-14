@@ -1,1 +1,26 @@
+{% extends 'external-base.html' %}
+{% load static %}
+
+{% block content %}
+
+Current accounts:
+{% for acc in google_accounts %}
+{{ acc }}
+{% endfor %}
+
+Add <a href="{% url 'google-authorize' %}">an account</a>
+
+Current calendars:
+{% for cal in calendars %}
+{{ cal }}
+{% endfor %}
+
+<!-- TODO re-sync calendars button -->
+
+Current syncs:
+{% for sync in syncs %}
+{{ sync }}
+{% endfor %}
 Template plz!
+
+{% endblock content %}

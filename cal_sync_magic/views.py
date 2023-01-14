@@ -56,8 +56,12 @@ class GoogleCallBackView(LoginRequiredMixin, View):
 
 class ConfigureSyncs(LoginRequiredMixin, View):
     def get(self, request):
+        google_accounts = GoogleAccount.objects.filter(user = request.user)
         calendars = UserCalendar.objects.filter(user = request.user)
         syncs = SyncConfigs.objects.filter(user = request.user)
         return render(request, 'configure_sync.html', context={
-            'title': "Configure calendar syncing"
+            'title': "Configure calendar syncing",
+            'google_accounts': google_accounts,
+            'calendars': calendars,
+            'syncs': syncs
             })
