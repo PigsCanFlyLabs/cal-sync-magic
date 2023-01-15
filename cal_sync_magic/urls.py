@@ -9,4 +9,5 @@ urlpatterns = [
     path("google-authorize", views.GoogleAuthView.as_view(), name="google-authorize"),
     path("google-oauth-callback", views.GoogleCallBackView.as_view(), name="google-oauth-callback"),
     path("sync-config", views.ConfigureSyncs.as_view(), name="sync-config"),
+    path("update-calendars", views.UpdateUserCalendars.as_view(), name="update-user-calendars"),
 ]

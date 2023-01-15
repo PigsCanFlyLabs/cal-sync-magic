@@ -11,19 +11,16 @@ from googleapiclient.discovery import build
 
 from cal_sync_magic.models import *
 
-# Google related views
-# See https://developers.google.com/identity/protocols/oauth2/web-server#python
-scopes = ["https://www.googleapis.com/auth/calendar.events",
-          "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/calendar.calendarlist"]
-API_SERVICE_NAME = "calendar"
-API_VERSION = "v3"
+def get_redirect_uri(request):
+    return str(request.build_absolute_uri(reverse("google-oauth-callback")))
 
 class GoogleAuthView(LoginRequiredMixin, View):
     def get(self, request):
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
             settings.GOOGLE_CLIENT_SECRETS_FILE, scopes=scopes)
-        flow.redirect_uri = str(request.build_absolute_uri(reverse("google-oauth-callback")))
+        redirect_uri = get_redirect_uri(request)
+        print(f"Redirect uri is {redirect_uri}")
+        flow.redirect_uri = redirect_uri
         authorization_url, state = flow.authorization_url(
             # Enable offline access so that you can refresh an access token without
             # re-prompting the user for permission. Recommended for web server apps.
@@ -38,21 +35,33 @@ class GoogleCallBackView(LoginRequiredMixin, View):
     def get(self, request):
         state = request.session['google_auth_state']
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-            CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
-        flow.redirect_uri = request.build_absolute_uri(reverse("google-oauth-callback"))
-        authorization_response = request.GET.get("url")
+            settings.GOOGLE_CLIENT_SECRETS_FILE, scopes=scopes, state=state)
+        redirect_uri = get_redirect_uri(request)
+        flow.redirect_uri = redirect_uri
+        authorization_response = (redirect_uri + "?"
+                                  + request.META['QUERY_STRING'])
+        print(f"Auth response is {authorization_response}")
         flow.fetch_token(authorization_response=authorization_response)
         credentials = flow.credentials
         user_info_service = build('oauth2', 'v2', credentials=credentials)
         user_info = user_info_service.userinfo().get().execute()
         google_user_email = user_info['email']
-        account = GoogleAccount.update_or_create(
+        account = GoogleAccount.objects.update_or_create(
             user = request.user,
             google_user_email=google_user_email,
             defaults={
-                "credentials": credentials,
+                "credential_expiry": credentials.expiry,
+                "credentials": credentials.to_json(),
                 "last_refreshed": datetime.now()})
-        return redirct(reverse("config-sync"))
+        return redirect(reverse("update-user-calendars"))
+
+class UpdateUserCalendars(LoginRequiredMixin, View):
+    def get(self, request):
+        user = request.user
+        for account in GoogleAccount.objects.filter(user = request.user):
+            account.refresh_calendars()
+        return redirect(reverse("sync-config"))
+
 
 class ConfigureSyncs(LoginRequiredMixin, View):
     def get(self, request):

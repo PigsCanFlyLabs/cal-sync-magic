@@ -3,24 +3,44 @@
 
 {% block content %}
 
+<p>
 Current accounts:
+</p>
 {% for acc in google_accounts %}
-{{ acc }}
+<p>
+  {{ acc.google_user_email }}
+</p>
 {% endfor %}
 
-Add <a href="{% url 'google-authorize' %}">an account</a>
+<p>
+  Add <a href="{% url 'google-authorize' %}">an account</a>
+</p>
 
-Current calendars:
+<p>
+  Current calendars:
+</p>
+<table style="border: 1px solid; width: 100%;">
+  <tr>
+    <th>Google User</th>
+    <th>Calendar Name</th>
+    <th>Calendar ID</th>
+  </tr>
 {% for cal in calendars %}
-{{ cal }}
+  <tr>
+    <th>{{ cal.google_account.google_user_email }}</th>
+    <th>{{ cal.name }}</th>
+    <th>{{ cal.google_calendar_id }}</th>
+  </tr>
 {% endfor %}
-
-<!-- TODO re-sync calendars button -->
-
-Current syncs:
+</table>
+Missing a new calendar: <a href="{% url 'update-user-calendars' %}">Update calendars</a><br/>
+<p>
+  Current syncs:
+</p>
 {% for sync in syncs %}
-{{ sync }}
+<p>
+  {{ sync }}
+</p>
 {% endfor %}
-Template plz!
 
 {% endblock content %}
