@@ -93,11 +93,11 @@ class UserCalendar(models.Model):
         calendar_service = self.google_account.calendar_service()
         # Make initial events request
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-        timeMax = datetime.datetime.utcnow() + relativedelta(years=2)
+        timeMax = datetime.datetime.utcnow() + relativedelta(years=4).isoformat() + 'Z'
         cal_req = calendar_service.events().list(calendarId= self.google_calendar_id,
                                                 timeMin=now,
-                                                timeMax=,
-                                                maxResults=500,
+                                                timeMax=timeMax,
+                                                maxResults=5000,
                                                 singleEvents=True, # Expands re-occuring events out, required for startTime ordering.
                                                 orderBy='startTime')
         events = cal_req.execute()
