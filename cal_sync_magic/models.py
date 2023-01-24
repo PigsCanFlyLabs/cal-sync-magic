@@ -1,15 +1,14 @@
+import json
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
-
 
 from django.conf import settings
-from django.utils.timezone import activate
 from django.contrib.auth import get_user_model
 from django.db import models
-import json
+from django.utils.timezone import activate
 
 import google.auth.transport.requests
 import google.oauth2.credentials
+from dateutil.relativedelta import relativedelta
 from googleapiclient.discovery import build
 
 User = get_user_model()

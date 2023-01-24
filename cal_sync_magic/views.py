@@ -11,6 +11,7 @@ from googleapiclient.discovery import build
 
 from cal_sync_magic.models import *
 
+
 def get_redirect_uri(request):
     return str(request.build_absolute_uri(reverse("google-oauth-callback")))
 
