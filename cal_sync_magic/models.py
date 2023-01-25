@@ -1,5 +1,6 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -36,19 +37,20 @@ class GoogleAccount(models.Model):
 
     def get_credentials(self):
         stored_creds = json.loads(self.credentials)
-        print(stored_creds)
         # Get expirery so we can figure out if we need a refresh
         if self.credential_expiry is not None:
             stored_creds["expiry"] = self.credential_expiry
         else:
             stored_creds["expiry"] = datetime.now()
+
+        # Drop timezone info but subtract a day just to be safe.
+        stored_creds["expiry"] = stored_creds["expiry"].replace(tzinfo=None) - timedelta(days=1)
         user_credentials = google.oauth2.credentials.Credentials(**stored_creds)
-        # Callind expired gives a bunch of TZ errors so do the check ourself
-        if stored_creds["expiry"].timestamp() <= datetime.now().timestamp():
+        if user_credentials.expired:
             http_request = google.auth.transport.requests.Request()
             user_credentials.refresh(http_request)
         self.credentials = user_credentials.to_json()
-        self.expiry = user_credentials.expiry
+        self.credential_expiry = user_credentials.expiry
         self.save()
         return user_credentials
 
@@ -58,9 +60,7 @@ class GoogleAccount(models.Model):
     def refresh_calendars(self):
         """Refresh the user calendars. Defined here so we can share refresh logic."""
         current_cals = self.calendar_service().calendarList().list().execute()
-        print(current_cals['items'])
         for cal in current_cals['items']:
-            print(cal)
             deleted = "deleted" in cal and cal["deleted"]
             UserCalendar.objects.update_or_create(
                 user=self.user,
