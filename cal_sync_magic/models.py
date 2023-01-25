@@ -39,7 +39,7 @@ class GoogleAccount(models.Model):
         print(stored_creds)
         # Get expirery so we can figure out if we need a refresh
         if self.credential_expiry is not None:
-            stored_creds["expiry"] = self.credential_expirery
+            stored_creds["expiry"] = self.credential_expiry
         else:
             stored_creds["expiry"] = datetime.now()
         user_credentials = google.oauth2.credentials.Credentials(**stored_creds)
