@@ -16,7 +16,7 @@ ROOT_URLCONF = "testapp.urls"
 
 DEBUG = True
 
-STATIC_URL = "/static/" 
+STATIC_URL = "/static/"
 
 DATABASES = {
     "default": {
@@ -34,7 +34,7 @@ if not os.path.exists(GOOGLE_CLIENT_SECRETS_FILE):
     try:
         import json
         print(f"Farts: {os.getenv('FARTS')}")
-        secret = os.getenv("GOOGLE_CLIENT_SECRETS_TEXT").decode("utf-8")
+        secret = os.getenv("GOOGLE_CLIENT_SECRETS_TEXT")
         farts = json.loads(secret)
         assert "web" in farts
         with open(GOOGLE_CLIENT_SECRETS_FILE, 'w') as f:
