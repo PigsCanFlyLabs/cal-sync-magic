@@ -15,6 +15,7 @@ from cal_sync_magic.models import *
 def get_redirect_uri(request):
     return str(request.build_absolute_uri(reverse("google-oauth-callback")))
 
+
 class GoogleAuthView(LoginRequiredMixin, View):
     def get(self, request):
         required_scopes = request.GET("scopes", "cal_scopes")
@@ -71,6 +72,17 @@ class UpdateUserCalendars(LoginRequiredMixin, View):
             account.refresh_calendars()
         return redirect(reverse("sync-config"))
 
+
+class UpdateUserCalendars(LoginRequiredMixin, View):
+    def get(self, request):
+        user = request.user
+        # Filter on user so folks can't update other peoples accounts settings
+        google_account = GoogleAccount.objects.filter(user = request.user, account_id = request.POST["id"])
+        google_account.calendar_sync_enabled = request.POST["calendar_sync_enabled"]
+        google_account.second_chance_email = request.POST["second_chance_email"]
+        google_account.delete_events_from_email = request.POST["delete_events_from_email"]
+        google_account.save()
+        return redirect(reverse("sync-config"))
 
 class ConfigureSyncs(LoginRequiredMixin, View):
     def get(self, request):

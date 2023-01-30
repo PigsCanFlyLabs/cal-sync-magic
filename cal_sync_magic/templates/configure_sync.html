@@ -6,12 +6,27 @@
 <p>
 Current accounts:
 </p>
+<table>
 {% for acc in google_accounts %}
-<p>
-  {{ acc.google_user_email }}
-</p>
+<tr>
+  <td>
+    {{ acc.google_user_email }}
+  </td>
+  <td>
+    {{ acc.scopes }}
+  </td>
+  <td>
+    <form action="{% url update_gaccount_settings %}" method="post">
+      <input id="id" value="{{acc.account_id}}" type="hidden">
+      <input type="checkbox" id="calendar_sync_enabled" checked="{{acc.calendar_sync_enabled}}" > <label>Calendar Sync</label>
+      <input type="checkbox" id="second_chance_email" checked="{{acc.second_chance_email}}"> <label>2nc chance spam filter</label>
+      <input type="checkbox" id="delete_events_from_email" checked="{{acc.delete_events_from_email}}"> <label>E-mail Event Cleanup</label>
+      <input type="submit" value="Update">
+    </form>
+  </td>
+</tr>
 {% endfor %}
-
+</table>
 <p>
   Add <a href="{% url 'google-authorize' %}?scopes={{ 'cal_scopes' |urlencode }}">an account</a>
 </p>
@@ -23,6 +38,7 @@ Current accounts:
   Add <a href="{% url 'google-authorize' %}?scopes={{ 'cal_scopes,base_email_scopes,read_email_scopes' | urlencode }}">an account more email (enough to get rid of those best buy phishing e-mails & do a better job processing reservation e-mails)</a>
 </p>
 
+Want to <a href="https://myaccount.google.com/permissions">revoke an account?</a>
 
 <p>
   Current calendars:

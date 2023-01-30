@@ -10,4 +10,5 @@ urlpatterns = [
     path("google-oauth-callback", views.GoogleCallBackView.as_view(), name="google-oauth-callback"),
     path("sync-config", views.ConfigureSyncs.as_view(), name="sync-config"),
     path("update-calendars", views.UpdateUserCalendars.as_view(), name="update-user-calendars"),
+    path("update-gaccount-settings", views.UpdateGoogleAccounts.as_view(), name="update-gaccount-settings"),
 ]
