@@ -18,7 +18,7 @@ def get_redirect_uri(request):
 
 class GoogleAuthView(LoginRequiredMixin, View):
     def get(self, request):
-        required_scopes = request.GET("scopes", "cal_scopes")
+        required_scopes = request.GET.get("scopes", "cal_scopes")
         request_scopes = scopes["base"]
         for s in required_scopes.split(" "):
             request_scopes += scopes[s]
@@ -73,14 +73,14 @@ class UpdateUserCalendars(LoginRequiredMixin, View):
         return redirect(reverse("sync-config"))
 
 
-class UpdateUserCalendars(LoginRequiredMixin, View):
+class UpdateGoogleAccounts(LoginRequiredMixin, View):
     def get(self, request):
         user = request.user
         # Filter on user so folks can't update other peoples accounts settings
-        google_account = GoogleAccount.objects.filter(user = request.user, account_id = request.POST["id"])
-        google_account.calendar_sync_enabled = request.POST["calendar_sync_enabled"]
-        google_account.second_chance_email = request.POST["second_chance_email"]
-        google_account.delete_events_from_email = request.POST["delete_events_from_email"]
+        google_account = GoogleAccount.objects.filter(user = request.user, account_id = request.POST.get("id"))
+        google_account.calendar_sync_enabled = request.POST.get("calendar_sync_enabled")
+        google_account.second_chance_email = request.POST.get("second_chance_email")
+        google_account.delete_events_from_email = request.POST.get("delete_events_from_email")
         google_account.save()
         return redirect(reverse("sync-config"))
 

@@ -11,6 +11,8 @@ import google.auth.transport.requests
 import google.oauth2.credentials
 from dateutil.relativedelta import relativedelta
 from googleapiclient.discovery import build
+import django.forms
+from django.forms import Form
 
 User = get_user_model()
 
@@ -32,6 +34,13 @@ scopes = {
 API_SERVICE_NAME = "calendar"
 API_VERSION = "v3"
 
+class ConfigureGoogleAccountForm(Form):
+    def __init__(self, account_id, calendar_sync_enabled, second_chance_email, delete_events_from_email):
+        self.fields["account_id"] = forms.CharField(widget = forms.HiddenInput(), required = True, initial=account_id)
+        self.fields["calendar_sync_enabled"] = forms.Checkbox(required = True, initial=calendar_sync_enabled)
+        self.fields["second_chance_email"] = forms.Checkbox(required = True, initial=second_chance_email)
+        self.fields["delete_events_from_email"] = forms.Checkbox(required = True, initial=delete_events_from_email)
+
 class GoogleAccount(models.Model):
     account_id = models.AutoField(primary_key=True, null=False)
     user = models.ForeignKey(
@@ -48,6 +57,21 @@ class GoogleAccount(models.Model):
     second_chance_email = models.BooleanField(default=False)
     more_spam_filter = models.BooleanField(default=False)
     delete_events_from_email = models.BooleanField(default=False)
+
+    def get_form(self):
+        return ConfigureGoogleAccountForm(
+            account_id=self.account_id,
+            calendar_sync_enabled=self.calendar_sync_enabled,
+            second_chance_email=self.second_chance_email,
+            delete_events_from_email=self.delete_events_from_email)
+
+    def get_friendly_scopes(self):
+        friendly_scopes = []
+        for scope_name in scopes.keys():
+            scope_values = scopes[scope_name]
+            if all(map(lambda scope: scope in self.scopes, scope_values)):
+                friendly_scopes.append(scope_name)
+        return friendly_scopes
 
     def get_credentials(self):
         stored_creds = json.loads(self.credentials)

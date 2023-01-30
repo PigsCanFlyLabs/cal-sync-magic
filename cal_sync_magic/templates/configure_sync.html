@@ -13,15 +13,11 @@ Current accounts:
     {{ acc.google_user_email }}
   </td>
   <td>
-    {{ acc.scopes }}
+    {{ acc.get_friendly_scopes }}
   </td>
   <td>
-    <form action="{% url update_gaccount_settings %}" method="post">
-      <input id="id" value="{{acc.account_id}}" type="hidden">
-      <input type="checkbox" id="calendar_sync_enabled" checked="{{acc.calendar_sync_enabled}}" > <label>Calendar Sync</label>
-      <input type="checkbox" id="second_chance_email" checked="{{acc.second_chance_email}}"> <label>2nc chance spam filter</label>
-      <input type="checkbox" id="delete_events_from_email" checked="{{acc.delete_events_from_email}}"> <label>E-mail Event Cleanup</label>
-      <input type="submit" value="Update">
+    <form action="{% url 'update-gaccount-settings' %}" method="post">
+      {{acc.get_form}}
     </form>
   </td>
 </tr>
