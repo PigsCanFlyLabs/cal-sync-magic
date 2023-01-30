@@ -57,8 +57,8 @@ class GoogleAccount(models.Model):
         else:
             stored_creds["expiry"] = datetime.now()
 
-        # Drop timezone info but subtract a day just to be safe.
-        stored_creds["expiry"] = stored_creds["expiry"].replace(tzinfo=None) - timedelta(days=1)
+        # Drop timezone info
+        stored_creds["expiry"] = stored_creds["expiry"].replace(tzinfo=None)
         user_credentials = google.oauth2.credentials.Credentials(**stored_creds)
         if user_credentials.expired:
             http_request = google.auth.transport.requests.Request()
