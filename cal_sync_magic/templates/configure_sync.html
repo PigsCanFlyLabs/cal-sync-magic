@@ -13,8 +13,16 @@ Current accounts:
 {% endfor %}
 
 <p>
-  Add <a href="{% url 'google-authorize' %}">an account</a>
+  Add <a href="{% url 'google-authorize' %}?scopes={{ 'cal_scopes' |urlencode }}">an account</a>
 </p>
+
+<p>
+  Add <a href="{% url 'google-authorize' %}?scopes={{ 'cal_scopes,base_email_scopes' |urlencode }}">an account w/just enough e-mail for 2nd chance e-mail + flight cancelations</a>
+</p>
+<p>
+  Add <a href="{% url 'google-authorize' %}?scopes={{ 'cal_scopes,base_email_scopes,read_email_scopes' | urlencode }}">an account more email (enough to get rid of those best buy phishing e-mails & do a better job processing reservation e-mails)</a>
+</p>
+
 
 <p>
   Current calendars:

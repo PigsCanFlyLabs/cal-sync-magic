@@ -16,10 +16,19 @@ User = get_user_model()
 
 # Google related views
 # See https://developers.google.com/identity/protocols/oauth2/web-server#python
-scopes = ["https://www.googleapis.com/auth/calendar.events",
-          "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/calendar.calendarlist",
-          "openid"]
+scopes = {
+    "base": ["openid",
+             "https://www.googleapis.com/auth/userinfo.email"],
+    "cal_scopes": ["https://www.googleapis.com/auth/calendar.events",
+                   "https://www.googleapis.com/auth/calendar.calendarlist"],
+    "base_email_scopes": [
+        "https://www.googleapis.com/auth/gmail.labels",
+        "https://www.googleapis.com/auth/gmail.metadata",
+        "https://www.googleapis.com/auth/gmail.send",
+        "https://www.googleapis.com/auth/gmail.metadata"],
+    "read_email_scopes": [
+        "https://www.googleapis.com/auth/gmail.readonly"]
+    }
 API_SERVICE_NAME = "calendar"
 API_VERSION = "v3"
 
@@ -34,6 +43,11 @@ class GoogleAccount(models.Model):
     credential_expiry = models.DateTimeField(null=True)
     last_refreshed = models.DateTimeField(default=datetime.now)
     unique_together = ["user", "google_user_email"]
+    scopes = models.CharField(max_length=200, null=True, blank=True)
+    calendar_sync_enabled = models.BooleanField(default=True)
+    second_chance_email = models.BooleanField(default=False)
+    more_spam_filter = models.BooleanField(default=False)
+    delete_events_from_email = models.BooleanField(default=False)
 
     def get_credentials(self):
         stored_creds = json.loads(self.credentials)
@@ -133,6 +147,9 @@ class SyncConfigs(models.Model):
         'UserCalendar', related_name='src_calendars')
     sink_calendars = models.ManyToManyField(
         'UserCalendar', related_name='sink_calendars')
+    match_title_regex = models.CharField(max_length=1000, null=True, blank=True)
+    match_creator_regex = models.CharField(max_length=1000, null=True, blank=True)
+    rewrite_regex = models.CharField(max_length=1000, null=True, blank=True)
 
     class Meta:
         app_label = "cal_sync_magic"

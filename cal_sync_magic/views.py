@@ -17,8 +17,12 @@ def get_redirect_uri(request):
 
 class GoogleAuthView(LoginRequiredMixin, View):
     def get(self, request):
+        required_scopes = request.GET("scopes", "cal_scopes")
+        request_scopes = scopes["base"]
+        for s in required_scopes.split(" "):
+            request_scopes += scopes[s]
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-            settings.GOOGLE_CLIENT_SECRETS_FILE, scopes=scopes)
+            settings.GOOGLE_CLIENT_SECRETS_FILE, scopes=request_scopes)
         redirect_uri = get_redirect_uri(request)
         print(f"Redirect uri is {redirect_uri}")
         flow.redirect_uri = redirect_uri
@@ -29,14 +33,16 @@ class GoogleAuthView(LoginRequiredMixin, View):
             # Enable incremental authorization. Recommended as a best practice.
             include_granted_scopes='true')
         request.session['google_auth_state'] = state
+        request.session['raw_scopes'] = request_scopes
         # Redirect the user to the authorization url
         return redirect(authorization_url)
 
 class GoogleCallBackView(LoginRequiredMixin, View):
     def get(self, request):
+        request_scopes = request.session['raw_scopes']
         state = request.session['google_auth_state']
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-            settings.GOOGLE_CLIENT_SECRETS_FILE, scopes=scopes, state=state)
+            settings.GOOGLE_CLIENT_SECRETS_FILE, scopes=request_scopes, state=state)
         redirect_uri = get_redirect_uri(request)
         flow.redirect_uri = redirect_uri
         authorization_response = (redirect_uri + "?"
@@ -53,7 +59,9 @@ class GoogleCallBackView(LoginRequiredMixin, View):
             defaults={
                 "credential_expiry": credentials.expiry,
                 "credentials": credentials.to_json(),
-                "last_refreshed": datetime.now()})
+                "last_refreshed": datetime.now(),
+                "scopes": request_scopes
+            })
         return redirect(reverse("update-user-calendars"))
 
 class UpdateUserCalendars(LoginRequiredMixin, View):
