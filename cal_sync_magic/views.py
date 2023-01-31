@@ -20,7 +20,7 @@ class GoogleAuthView(LoginRequiredMixin, View):
     def get(self, request):
         required_scopes = request.GET.get("scopes", "cal_scopes")
         request_scopes = scopes["base"]
-        for s in required_scopes.split(" "):
+        for s in required_scopes.split(","):
             request_scopes += scopes[s]
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
             settings.GOOGLE_CLIENT_SECRETS_FILE, scopes=request_scopes)
@@ -74,15 +74,21 @@ class UpdateUserCalendars(LoginRequiredMixin, View):
 
 
 class UpdateGoogleAccounts(LoginRequiredMixin, View):
-    def get(self, request):
+    def post(self, request):
         user = request.user
-        # Filter on user so folks can't update other peoples accounts settings
-        google_account = GoogleAccount.objects.filter(user = request.user, account_id = request.POST.get("id"))
-        google_account.calendar_sync_enabled = request.POST.get("calendar_sync_enabled")
-        google_account.second_chance_email = request.POST.get("second_chance_email")
-        google_account.delete_events_from_email = request.POST.get("delete_events_from_email")
-        google_account.save()
-        return redirect(reverse("sync-config"))
+        form = UpdateGoogleAccountsForm(request.POST)
+        if form.is_valid():
+            # Filter on user so folks can't update other peoples accounts settings
+            google_account = GoogleAccount.objects.filter(
+                user = request.user,
+                account_id = form.cleaned_data['account_id']).get()
+            google_account.calendar_sync_enabled = form.cleaned_data['calendar_sync_enabled']
+            google_account.second_chance_email = form.cleaned_data['second_chance_email']
+            google_account.delete_events_from_email = form.cleaned_data['delete_events_from_email']
+            google_account.save()
+            return redirect(reverse("sync-config"))
+        else:
+            raise Exception(f"Form validation failed - {form} from {request.POST}")
 
 class ConfigureSyncs(LoginRequiredMixin, View):
     def get(self, request):

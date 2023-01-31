@@ -11,8 +11,7 @@ import google.auth.transport.requests
 import google.oauth2.credentials
 from dateutil.relativedelta import relativedelta
 from googleapiclient.discovery import build
-import django.forms
-from django.forms import Form
+from django import forms
 
 User = get_user_model()
 
@@ -34,12 +33,13 @@ scopes = {
 API_SERVICE_NAME = "calendar"
 API_VERSION = "v3"
 
-class ConfigureGoogleAccountForm(Form):
-    def __init__(self, account_id, calendar_sync_enabled, second_chance_email, delete_events_from_email):
-        self.fields["account_id"] = forms.CharField(widget = forms.HiddenInput(), required = True, initial=account_id)
-        self.fields["calendar_sync_enabled"] = forms.Checkbox(required = True, initial=calendar_sync_enabled)
-        self.fields["second_chance_email"] = forms.Checkbox(required = True, initial=second_chance_email)
-        self.fields["delete_events_from_email"] = forms.Checkbox(required = True, initial=delete_events_from_email)
+
+class UpdateGoogleAccountsForm(forms.Form):
+    account_id = forms.CharField(label='Account ID', max_length=200, required=True, widget=forms.HiddenInput)
+    calendar_sync_enabled = forms.BooleanField(label="Calendar Sync", required=False)
+    second_chance_email = forms.BooleanField(label="2nd chance e-mail", required=False)
+    delete_events_from_email = forms.BooleanField(label="Delete events based on email", required=False)
+
 
 class GoogleAccount(models.Model):
     account_id = models.AutoField(primary_key=True, null=False)
@@ -57,13 +57,6 @@ class GoogleAccount(models.Model):
     second_chance_email = models.BooleanField(default=False)
     more_spam_filter = models.BooleanField(default=False)
     delete_events_from_email = models.BooleanField(default=False)
-
-    def get_form(self):
-        return ConfigureGoogleAccountForm(
-            account_id=self.account_id,
-            calendar_sync_enabled=self.calendar_sync_enabled,
-            second_chance_email=self.second_chance_email,
-            delete_events_from_email=self.delete_events_from_email)
 
     def get_friendly_scopes(self):
         friendly_scopes = []
@@ -105,6 +98,14 @@ class GoogleAccount(models.Model):
                 google_account=self,
                 google_calendar_id=cal['id'],
                 defaults={"deleted": deleted, "name": cal['summary']})
+
+    def get_config_form(self):
+        f = UpdateGoogleAccountsForm()
+        f.fields["account_id"].initial = self.account_id
+        f.fields["calendar_sync_enabled"].initial = self.calendar_sync_enabled
+        f.fields["second_chance_email"].initial = self.second_chance_email
+        f.fields["delete_events_from_email"].initial = self.delete_events_from_email
+        return f
 
 
     class Meta:

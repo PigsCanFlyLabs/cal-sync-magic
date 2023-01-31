@@ -16,8 +16,15 @@ Current accounts:
     {{ acc.get_friendly_scopes }}
   </td>
   <td>
-    <form action="{% url 'update-gaccount-settings' %}" method="post">
-      {{acc.get_form}}
+    <form action="{% url 'update-gaccount-settings' %}" method="post" novalidate="novalidate">
+      {% csrf_token %}
+      {{ acc.get_config_form.as_div }}
+      <!--
+      <input name="account_id" value="{{acc.account_id}}" type="hidden">
+      <p><input type="checkbox" name="calendar_sync_enabled" {% if acc.calendar_sync_enabled %} checked {% endif %} > <label>Calendar Sync</label></p>
+      <p><input type="checkbox" name="second_chance_email" {% if acc.second_chance_email %} checked {% endif %}> <label>2nd chance spam filter</label></p>
+      <p><input type="checkbox" name="delete_events_from_email" {% if acc.delete_events_from_email %} checked {% endif %}> <label>E-mail Event Cleanup</label></p> -->
+      <input type="submit" value="Update">
     </form>
   </td>
 </tr>
