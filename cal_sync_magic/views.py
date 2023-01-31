@@ -76,7 +76,7 @@ class UpdateUserCalendars(LoginRequiredMixin, View):
 class UpdateGoogleAccounts(LoginRequiredMixin, View):
     def post(self, request):
         user = request.user
-        form = UpdateGoogleAccountsForm(request.POST)
+        form = UpdateGoogleAccountForm(request.POST)
         if form.is_valid():
             # Filter on user so folks can't update other peoples accounts settings
             google_account = GoogleAccount.objects.filter(
@@ -99,5 +99,6 @@ class ConfigureSyncs(LoginRequiredMixin, View):
             'title': "Configure calendar syncing",
             'google_accounts': google_accounts,
             'calendars': calendars,
-            'syncs': syncs
+            'syncs': syncs,
+            'add_sync_form': NewSync(request.user, calendars=calendars)
             })

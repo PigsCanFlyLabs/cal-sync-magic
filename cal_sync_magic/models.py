@@ -34,7 +34,9 @@ API_SERVICE_NAME = "calendar"
 API_VERSION = "v3"
 
 
-class UpdateGoogleAccountsForm(forms.Form):
+# We use a regular form instead of model form because we want the account id (e.g. two users _could_ add the same google account
+# so this way we know were modifying the correct users google account).
+class UpdateGoogleAccountForm(forms.Form):
     account_id = forms.CharField(label='Account ID', max_length=200, required=True, widget=forms.HiddenInput)
     calendar_sync_enabled = forms.BooleanField(label="Calendar Sync", required=False)
     second_chance_email = forms.BooleanField(label="2nd chance e-mail", required=False)
@@ -100,7 +102,7 @@ class GoogleAccount(models.Model):
                 defaults={"deleted": deleted, "name": cal['summary']})
 
     def get_config_form(self):
-        f = UpdateGoogleAccountsForm()
+        f = UpdateGoogleAccountForm()
         f.fields["account_id"].initial = self.account_id
         f.fields["calendar_sync_enabled"].initial = self.calendar_sync_enabled
         f.fields["second_chance_email"].initial = self.second_chance_email
@@ -125,6 +127,9 @@ class UserCalendar(models.Model):
     deleted = models.BooleanField(default=False)
     last_sync_token = models.CharField(max_length=500, null=True, blank=True)
     webhook_enabled = models.BooleanField(default=False) # See https://developers.google.com/calendar/api/guides/push
+
+    def __str__(self):
+        return self.name
 
     # Here we only really care about future events.
     def _full_sync():
@@ -162,7 +167,6 @@ class UserCalendar(models.Model):
     class Meta:
         app_label = "cal_sync_magic"
 
-
 class SyncConfigs(models.Model):
     user = models.ForeignKey(
         User,
@@ -172,9 +176,29 @@ class SyncConfigs(models.Model):
         'UserCalendar', related_name='src_calendars')
     sink_calendars = models.ManyToManyField(
         'UserCalendar', related_name='sink_calendars')
+    hide_details = models.BooleanField(default=False)
+    warn_location_mismatch = models.BooleanField(default=False)
+    min_sched = models.DurationField(null=True)
+    default_title = models.CharField(max_length=100, null=True, blank=True)
     match_title_regex = models.CharField(max_length=1000, null=True, blank=True)
     match_creator_regex = models.CharField(max_length=1000, null=True, blank=True)
     rewrite_regex = models.CharField(max_length=1000, null=True, blank=True)
 
     class Meta:
         app_label = "cal_sync_magic"
+
+class NewSync(forms.ModelForm):
+    class Meta:
+        model = SyncConfigs
+        fields = ['src_calendars', 'sink_calendars', 'hide_details',
+                  'default_title', 'min_sched']
+
+    def __init__(self, user, calendars):
+        super(__class__, self).__init__()
+        from django.db.models import Value
+        from django.db.models.functions import Concat
+
+        self.fields["src_calendars"]._choices = (
+            calendars
+        )
+        self.fields["sink_calendars"]._choices = self.fields["src_calendars"]._choices

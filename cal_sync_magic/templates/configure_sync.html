@@ -70,4 +70,15 @@ Missing a new calendar: <a href="{% url 'update-user-calendars' %}">Update calen
 </p>
 {% endfor %}
 
+<p>
+  Add a sync:
+</p>
+<p>
+  <form>
+    {% csrf_token %}
+    {{ add_sync_form.as_table }}
+      <input type="submit" value="Add new sync">
+  </form>
+</p>
+
 {% endblock content %}
