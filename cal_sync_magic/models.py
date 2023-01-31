@@ -54,17 +54,22 @@ class GoogleAccount(models.Model):
     credential_expiry = models.DateTimeField(null=True)
     last_refreshed = models.DateTimeField(default=datetime.now)
     unique_together = ["user", "google_user_email"]
-    scopes = models.CharField(max_length=200, null=True, blank=True)
     calendar_sync_enabled = models.BooleanField(default=True)
     second_chance_email = models.BooleanField(default=False)
     more_spam_filter = models.BooleanField(default=False)
     delete_events_from_email = models.BooleanField(default=False)
 
+    @property
+    def scopes(self):
+        creds = self.get_credentials()
+        return creds.scopes
+
     def get_friendly_scopes(self):
         friendly_scopes = []
+        account_scopes = self.scopes
         for scope_name in scopes.keys():
             scope_values = scopes[scope_name]
-            if all(map(lambda scope: scope in self.scopes, scope_values)):
+            if all(map(lambda scope: scope in account_scopes, scope_values)):
                 friendly_scopes.append(scope_name)
         return friendly_scopes
 
