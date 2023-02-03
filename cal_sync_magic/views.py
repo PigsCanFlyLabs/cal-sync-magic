@@ -61,7 +61,6 @@ class GoogleCallBackView(LoginRequiredMixin, View):
                 "credential_expiry": credentials.expiry,
                 "credentials": credentials.to_json(),
                 "last_refreshed": datetime.now(),
-                "scopes": request_scopes
             })
         return redirect(reverse("update-user-calendars"))
 

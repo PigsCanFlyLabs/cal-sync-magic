@@ -50,7 +50,7 @@ class GoogleAccount(models.Model):
         on_delete=models.CASCADE,
     )
     google_user_email = models.CharField(max_length=250, null=False)
-    credentials = models.CharField(max_length=1000, null=False)
+    credentials = models.CharField(max_length=5000, null=False)
     credential_expiry = models.DateTimeField(null=True)
     last_refreshed = models.DateTimeField(default=datetime.now)
     unique_together = ["user", "google_user_email"]
@@ -66,11 +66,14 @@ class GoogleAccount(models.Model):
 
     def get_friendly_scopes(self):
         friendly_scopes = []
-        account_scopes = self.scopes
-        for scope_name in scopes.keys():
-            scope_values = scopes[scope_name]
-            if all(map(lambda scope: scope in account_scopes, scope_values)):
-                friendly_scopes.append(scope_name)
+        try:
+            account_scopes = self.scopes
+            for scope_name in scopes.keys():
+                scope_values = scopes[scope_name]
+                if all(map(lambda scope: scope in account_scopes, scope_values)):
+                    friendly_scopes.append(scope_name)
+        except:
+            return ["Account re-add required."]
         return friendly_scopes
 
     def get_credentials(self):
@@ -135,6 +138,10 @@ class UserCalendar(models.Model):
 
     def __str__(self):
         return self.name
+
+    def add_event(self, title, time):
+        calendar_service = self.google_account.calendar_service()
+
 
     def get_changes():
         """Get the event changes since the last sync. This _may_ return all calendar events.
