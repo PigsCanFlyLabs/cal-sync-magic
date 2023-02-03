@@ -173,6 +173,9 @@ class UserCalendar(models.Model):
         app_label = "cal_sync_magic"
 
 class SyncConfigs(models.Model):
+    """
+    Configuration of a sink between two calendars.
+    """
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -182,28 +185,63 @@ class SyncConfigs(models.Model):
     sink_calendars = models.ManyToManyField(
         'UserCalendar', related_name='sink_calendars')
     hide_details = models.BooleanField(default=False)
-    warn_location_mismatch = models.BooleanField(default=False)
-    min_sched = models.DurationField(null=True)
     default_title = models.CharField(max_length=100, null=True, blank=True)
     match_title_regex = models.CharField(max_length=1000, null=True, blank=True)
     match_creator_regex = models.CharField(max_length=1000, null=True, blank=True)
     rewrite_regex = models.CharField(max_length=1000, null=True, blank=True)
+    invitee_skip_event_threshold = models.IntegerField(null=True, blank=True)
 
     class Meta:
         app_label = "cal_sync_magic"
+
+
+class CalendarRules(models.Model):
+    """
+    Configuration for rules to attempt to apply to calendar events as they come in.
+    """
+    min_sched = models.DurationField(null=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=False)
+    calendars = models.ManyToManyField(
+        'UserCalendar', related_name='rule_calendars')
+    warn_location_mismatch = models.BooleanField(default=False)
+    allow_list_min_sched = models.CharField(max_length=1000, null=True, blank=True)
+    # We call this the "west coast field."
+    soft_maybe_conflict = models.BooleanField(default=False)
+    # We call this the "east coast field."
+    decline_conflict = models.BooleanField(default=False)
+    allow_list_conflict = models.CharField(max_length=1000, null=True, blank=True)
+    # Delete canceled flights and stuff
+    try_to_delete_canceled_events = models.BooleanField(default=False)
+
+    class Meta:
+        app_label = "cal_sync_magic"
+
+
 
 class NewSync(forms.ModelForm):
     class Meta:
         model = SyncConfigs
         fields = ['src_calendars', 'sink_calendars', 'hide_details',
-                  'default_title', 'min_sched']
+                  'default_title', 'invitee_skip_event_threshold']
 
-    def __init__(self, user, calendars):
-        super(__class__, self).__init__()
-        from django.db.models import Value
-        from django.db.models.functions import Concat
-
+    def __init__(self, *args, user=None, calendars=None, **kwargs):
+        super(__class__, self).__init__(*args, **kwargs)
         self.fields["src_calendars"]._choices = (
             calendars
         )
         self.fields["sink_calendars"]._choices = self.fields["src_calendars"]._choices
+
+
+class NewCalRule(forms.ModelForm):
+    class Meta:
+        model = CalendarRules
+        exclude = ["user"]
+
+    def __init__(self, user, calendars):
+        super(__class__, self).__init__()
+        self.fields["calendars"]._choices = (
+            calendars
+        )

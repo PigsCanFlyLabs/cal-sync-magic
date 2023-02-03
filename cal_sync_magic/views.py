@@ -95,10 +95,48 @@ class ConfigureSyncs(LoginRequiredMixin, View):
         google_accounts = GoogleAccount.objects.filter(user = request.user)
         calendars = UserCalendar.objects.filter(user = request.user)
         syncs = SyncConfigs.objects.filter(user = request.user)
+        rules = CalendarRules.objects.filter(user = request.user)
         return render(request, 'configure_sync.html', context={
             'title': "Configure calendar syncing",
             'google_accounts': google_accounts,
             'calendars': calendars,
             'syncs': syncs,
-            'add_sync_form': NewSync(request.user, calendars=calendars)
+            'rules': rules,
+            'add_sync_form': NewSync(user=request.user, calendars=calendars),
+            'add_cal_rule_form': NewCalRule(user=request.user, calendars=calendars)
             })
+
+
+class DelRule(LoginRequiredMixin, View):
+    def post(self, request):
+        user = request.user
+        rule_id = request.POST.get("id")
+        CalendarRules.objects.filter(user = user, id = rule_id).delete()
+
+
+class DelSync(LoginRequiredMixin, View):
+    def post(self, request):
+        user = request.user
+        sync_id = request.POST.get("id")
+        SyncConfigs.objects.filter(user = user, id = sync_id).delete()
+
+
+class AddCalendarRule(LoginRequiredMixin, View):
+    def post(self, request):
+        user_form = NewCalRule(request.POST)
+        if user_form.fields["user"].value != request.user:
+            raise Exception("What?")
+        form.save()
+        return redirect(reverse("sync-config"))
+
+
+class AddSync(LoginRequiredMixin, View):
+    def post(self, request):
+        try:
+            user_form = NewSync(request.POST, user=request.user)
+            user_form.save()
+        except Exception as e:
+            print(f"Got error {e}")
+            print(user_form.errors)
+            print(user_form.non_field_errors())
+        return redirect(reverse("sync-config"))
