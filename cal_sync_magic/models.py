@@ -136,38 +136,41 @@ class UserCalendar(models.Model):
     def __str__(self):
         return self.name
 
-    # Here we only really care about future events.
-    def _full_sync():
+    def get_changes():
+        """Get the event changes since the last sync. This _may_ return all calendar events.
+        See https://developers.google.com/calendar/api/guides/sync"""
         calendar_service = self.google_account.calendar_service()
         # Make initial events request
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
         timeMax = datetime.datetime.utcnow() + relativedelta(years=4).isoformat() + 'Z'
-        cal_req = calendar_service.events().list(calendarId= self.google_calendar_id,
-                                                timeMin=now,
-                                                timeMax=timeMax,
-                                                maxResults=5000,
-                                                singleEvents=True, # Expands re-occuring events out, required for startTime ordering.
-                                                orderBy='startTime')
-        events = cal_req.execute()
+        cal_req = calendar_service.events().list(
+            calendarId= self.google_calendar_id,
+            timeMin=now,
+            timeMax=timeMax,
+            maxResults=5000,
+            # Expands re-occuring events out, required for startTime ordering.
+            singleEvents=True,
+            syncToken=self.last_sync_token,
+            orderBy='startTime')
+        try:
+            events = cal_req.execute()
+        except Exception:
+            cal_req = calendar_service.events().list(
+                calendarId=self.google_calendar_id,
+                timeMin=now,
+                timeMax=timeMax,
+                maxResults=5000,
+                singleEvents=True, # Expands re-occuring events out, required for startTime ordering.
+                orderBy='startTime')
         collected_events = events["items"]
         while "nextPageToken" in events:
             cal_req = calendar_service.events().list(previous_request=cal_req, previous_response=exents)
             events = cal_req.execute()
+            collected_events += events["items"]
+            self.last_sync_token = events["syncToken"]
+            self.save()
+        return collected_events
 
-
-    def _partiaul_sync():
-        """Trys an incremental sync."""
-        if self.last_sync_token is None:
-            raise Exception("Can't perform partial sync without a last sync token.")
-
-
-    def get_changes():
-        """Get the event changes since the last sync. This _may_ return all calendar events.
-        See https://developers.google.com/calendar/api/guides/sync"""
-        try:
-            return self._partial_sync()
-        except:
-            return self._full_sync()
 
     class Meta:
         app_label = "cal_sync_magic"
