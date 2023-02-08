@@ -104,7 +104,7 @@ class ConfigureSyncs(LoginRequiredMixin, View):
             'syncs': syncs,
             'rules': rules,
             'add_sync_form': NewSync(user=request.user, calendars=calendars),
-            'add_cal_rule_form': NewCalRule(calendars=calendars)
+            'add_cal_rule_form': NewCalRule(calendars=calendars, user=request.user)
             })
 
 
@@ -125,28 +125,23 @@ class DelSync(LoginRequiredMixin, View):
 class AddCalendarRule(LoginRequiredMixin, View):
     def post(self, request):
         user_form = NewCalRule(request.POST)
-        user_form.username = User.objects.get(user=request.user)
-        form.save()
+        if not user_form.is_valid():
+            raise exception("Invalid form")
+        if user_form.cleaned_data["user"] != self.request.user:
+            raise Exception(f"user mismatch")
+        user_form.save()
         return redirect(reverse("sync-config"))
 
 
 class AddSync(LoginRequiredMixin, View):
     def post(self, request):
-        try:
-            calendars = UserCalendar.objects.filter(user = request.user)
-            user_form = NewSync(request.POST, user=request.user, calendars=calendars)
-            if user_form.is_valid():
-                print(user_form.cleaned_data)
-                if user_form.cleaned_data["user"] != self.request.user:
-                    raise Exception(f"nooo {user_field.valid_value} {dir(user_field)}")
-                user_form.save()
-            else:
-                form.validate()
-        except Exception as e:
-            print(f"Got error {e}")
-            print(user_form.errors)
-            print(user_form.non_field_errors())
-            raise e
+        calendars = UserCalendar.objects.filter(user = request.user)
+        user_form = NewSync(request.POST, user=request.user, calendars=calendars)
+        if not user_form.is_valid():
+            raise exception("Invalid form")
+        if user_form.cleaned_data["user"] != self.request.user:
+            raise Exception(f"user mismatch")
+        user_form.save()
         return redirect(reverse("sync-config"))
 
 class ShowRawEvents(LoginRequiredMixin, View):
@@ -155,6 +150,6 @@ class ShowRawEvents(LoginRequiredMixin, View):
         calendar = UserCalendar.objects.filter(
             user = request.user,
             internal_calendar_id = internal_id).get()
-        events = calendar.get_changes()
+        events = map(lambda x: json.dumps(x), calendar.get_changes())
         return render(request, 'debug_raw.html', context={
             "events": events})

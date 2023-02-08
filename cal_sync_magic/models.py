@@ -6,12 +6,14 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.timezone import activate
+from django.core.validators import RegexValidator
 
 import google.auth.transport.requests
 import google.oauth2.credentials
 from dateutil.relativedelta import relativedelta
 from googleapiclient.discovery import build
 from django import forms
+
 
 User = get_user_model()
 
@@ -139,9 +141,39 @@ class UserCalendar(models.Model):
     def __str__(self):
         return self.name
 
-    def add_event(self, title, time):
-        calendar_service = self.google_account.calendar_service()
+    def handle_event(self, event):
+        syncs = SyncConfigs.objects.filter(
+            user = self.user,
+            eventgroups__contains = self)
+        rules = CalendarRules.objects.filter(
+            user = self.user,
+            calendars__contains = self)
 
+        for s in sync:
+            s.handle_event(e)
+        for r in rules:
+            r.handle_event(e)
+
+    def get_event(self, id):
+        calendar_service = self.google_account.calendar_service()
+        return calendar_service.events().get(
+            calendarId=self.google_calendar_id,
+            eventId=id)
+    
+    def add_event(self, event):
+        calendar_service = self.google_account.calendar_service()
+        calendar_service.events().insert(
+            calendarId=self.google_calendar_id,
+            body=event,
+            sendUpdates="none").execute()
+
+    def patch_event(self, event):
+        calendar_service = self.google_account.calendar_service()
+        calendar_service.events().patch(
+            calendarId=self.google_calendar_id,
+            eventId=event["id"],
+            body=event,
+            sendUpdates="none").execute()
 
     def get_changes(self):
         """Get the event changes since the last sync. This _may_ return all calendar events.
@@ -149,7 +181,7 @@ class UserCalendar(models.Model):
         calendar_service = self.google_account.calendar_service()
         # Make initial events request
         now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-        timeMax = (datetime.utcnow() + relativedelta(years=4)).isoformat() + 'Z'
+        timeMax = (datetime.utcnow() + relativedelta(years=50)).isoformat() + 'Z'
         cal_req = calendar_service.events().list(
             calendarId= self.google_calendar_id,
             timeMin=now,
@@ -204,6 +236,31 @@ class SyncConfigs(models.Model):
     def __str__(self):
         return f"{self.src_calendars.all()} to {self.sink_calendars.all()}"
 
+    def handle_event(self, event):
+        # No self propegating loops.
+        if ("source" in cleaned_event
+            and cleaned_event["source"] == "https://www.pigscanfly.ca/calendars/"):
+            return
+        for s in sink_calendars.filter(user=self.user):
+            cleaned_event = event
+            if self.default_title is not None:
+                if (self.match_title_regex is not None and
+                    re.search(self.match_title_regex, cleaned_event["title"]) is None):
+
+                    cleaned_event["title"] = default_title
+            if self.hide_details:
+                cleaned_event["description"] = "Magical synced calendar event."
+            cleaned_event["privateCopy"] = True
+            cleaned_event["source"] = "https://www.pigscanfly.ca/calendars/"
+            cleaned_event["attendees"] = []
+            current_event = s.get_event(id=event["id"])
+            if current_event is None:
+                s.add_event(cleaned_event)
+            else:
+                if cleaned_event["source"] == "https://www.pigscanfly.ca/calendars/":
+                    s.patch_event(cleaned_event)
+                else:
+                    print("Skipping sync back, looks like OG event.")
     class Meta:
         app_label = "cal_sync_magic"
 
@@ -229,8 +286,54 @@ class CalendarRules(models.Model):
     # Delete canceled flights and stuff
     try_to_delete_canceled_events = models.BooleanField(default=False)
 
+    def __str__(self):
+        r = ""
+        for field in self._meta.fields:
+            try:
+                name = field.name
+                value = field.value_to_string(self)
+                if value is None:
+                    r = f"{r}\n{name} -> None"
+                else:
+                    r = f"{r}\n{name} -> {value}"
+            except Exception as e:
+                r = f"{r}{e}"
+        return r
+
     class Meta:
         app_label = "cal_sync_magic"
+
+    def get_min_sched_allow(self):
+        if self.allow_list_min_sched is None:
+            return []
+        else:
+            return self.allow_list_min_sched.split(",")
+
+    def evaluate_rule(self, event):
+        """Evaluate a rule and take the configured action on it."""
+        self.evaluate_schedule(event)
+
+    def evaluate_schedule(self, event):
+        if self.min_sched is not None:
+            now = datetime.utcnow()
+            event_start = iso8601.parse_date(event.start.dateTime)
+            if ((now - event_start) < self.min_sched and
+                creator.email not in self.get_min_sched_allow() and
+                event["source"] is None and event["creator"] is not None and
+                event["creator"]["email"] is not None):
+
+                from django.core.mail import send_mail
+                subject_line = f"Invite to {event.summary}"
+                if event["creator"]["DisplayName"] is not None:
+                    subject_line = f"Invite to {event.summary} from {event.creator.DisplayName}"
+                send_email(
+                    subject_line,
+                    event["creator"]["email"],
+                    "calendar-magic@pigscanfly.ca",
+                    f"FYI the invite to this event was sent with less than {self.min_sched} " +
+                    f" notice so {self.google_user_email} may not make it."
+                )
+
 
 
 class NewSync(forms.ModelForm):
@@ -244,18 +347,28 @@ class NewSync(forms.ModelForm):
         if calendars is not None:
             self.fields["src_calendars"].queryset = calendars
             self.fields["sink_calendars"].queryset = calendars
+        if user is not None:
             user_field = self.fields["user"]
             user_field.initial = user
-            user_field.widget = user_field.hidden_widget() 
+            user_field.widget = user_field.hidden_widget()
+            user_field.validator = RegexValidator(regex=f"^{user}$")
 
 
 class NewCalRule(forms.ModelForm):
     class Meta:
         model = CalendarRules
-        exclude = []
+        # Exclude the not yet implemented features
+        exclude = ["warn_location_mismatch", "soft_maybe_conflict", "decline_conflict",
+                   "allow_list_conflict", "try_to_delete_canceled_events"]
 
-    def __init__(self, calendars):
-        super(__class__, self).__init__()
-        self.fields["calendars"]._choices = (
-            calendars
-        )
+    def __init__(self, *args, calendars=None, user=None, **kwargs):
+        super(__class__, self).__init__(*args, **kwargs)
+        if calendars is not None:
+            self.fields["calendars"]._choices = (
+                calendars
+            )
+        if user is not None:
+            user_field = self.fields["user"]
+            user_field.initial = user
+            user_field.widget = user_field.hidden_widget()
+            user_field.validator = RegexValidator(regex=f"^{user}$")
