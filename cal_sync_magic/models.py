@@ -143,13 +143,13 @@ class UserCalendar(models.Model):
         calendar_service = self.google_account.calendar_service()
 
 
-    def get_changes():
+    def get_changes(self):
         """Get the event changes since the last sync. This _may_ return all calendar events.
         See https://developers.google.com/calendar/api/guides/sync"""
         calendar_service = self.google_account.calendar_service()
         # Make initial events request
-        now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-        timeMax = datetime.datetime.utcnow() + relativedelta(years=4).isoformat() + 'Z'
+        now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+        timeMax = (datetime.utcnow() + relativedelta(years=4)).isoformat() + 'Z'
         cal_req = calendar_service.events().list(
             calendarId= self.google_calendar_id,
             timeMin=now,
@@ -201,6 +201,9 @@ class SyncConfigs(models.Model):
     rewrite_regex = models.CharField(max_length=1000, null=True, blank=True)
     invitee_skip_event_threshold = models.IntegerField(null=True, blank=True)
 
+    def __str__(self):
+        return f"{self.src_calendars.all()} to {self.sink_calendars.all()}"
+
     class Meta:
         app_label = "cal_sync_magic"
 
@@ -230,27 +233,28 @@ class CalendarRules(models.Model):
         app_label = "cal_sync_magic"
 
 
-
 class NewSync(forms.ModelForm):
     class Meta:
         model = SyncConfigs
         fields = ['src_calendars', 'sink_calendars', 'hide_details',
-                  'default_title', 'invitee_skip_event_threshold']
+                  'default_title', 'invitee_skip_event_threshold', 'user']
 
     def __init__(self, *args, user=None, calendars=None, **kwargs):
         super(__class__, self).__init__(*args, **kwargs)
-        self.fields["src_calendars"]._choices = (
-            calendars
-        )
-        self.fields["sink_calendars"]._choices = self.fields["src_calendars"]._choices
+        if calendars is not None:
+            self.fields["src_calendars"].queryset = calendars
+            self.fields["sink_calendars"].queryset = calendars
+            user_field = self.fields["user"]
+            user_field.initial = user
+            user_field.widget = user_field.hidden_widget() 
 
 
 class NewCalRule(forms.ModelForm):
     class Meta:
         model = CalendarRules
-        exclude = ["user"]
+        exclude = []
 
-    def __init__(self, user, calendars):
+    def __init__(self, calendars):
         super(__class__, self).__init__()
         self.fields["calendars"]._choices = (
             calendars

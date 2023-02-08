@@ -5,6 +5,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.contrib.auth import get_user_model
+User=get_user_model()
 
 import google_auth_oauthlib
 from googleapiclient.discovery import build
@@ -102,7 +104,7 @@ class ConfigureSyncs(LoginRequiredMixin, View):
             'syncs': syncs,
             'rules': rules,
             'add_sync_form': NewSync(user=request.user, calendars=calendars),
-            'add_cal_rule_form': NewCalRule(user=request.user, calendars=calendars)
+            'add_cal_rule_form': NewCalRule(calendars=calendars)
             })
 
 
@@ -111,20 +113,19 @@ class DelRule(LoginRequiredMixin, View):
         user = request.user
         rule_id = request.POST.get("id")
         CalendarRules.objects.filter(user = user, id = rule_id).delete()
-
+        return redirect(reverse("sync-config"))
 
 class DelSync(LoginRequiredMixin, View):
     def post(self, request):
         user = request.user
         sync_id = request.POST.get("id")
         SyncConfigs.objects.filter(user = user, id = sync_id).delete()
-
+        return redirect(reverse("sync-config"))
 
 class AddCalendarRule(LoginRequiredMixin, View):
     def post(self, request):
         user_form = NewCalRule(request.POST)
-        if user_form.fields["user"].value != request.user:
-            raise Exception("What?")
+        user_form.username = User.objects.get(user=request.user)
         form.save()
         return redirect(reverse("sync-config"))
 
@@ -132,10 +133,28 @@ class AddCalendarRule(LoginRequiredMixin, View):
 class AddSync(LoginRequiredMixin, View):
     def post(self, request):
         try:
-            user_form = NewSync(request.POST, user=request.user)
-            user_form.save()
+            calendars = UserCalendar.objects.filter(user = request.user)
+            user_form = NewSync(request.POST, user=request.user, calendars=calendars)
+            if user_form.is_valid():
+                print(user_form.cleaned_data)
+                if user_form.cleaned_data["user"] != self.request.user:
+                    raise Exception(f"nooo {user_field.valid_value} {dir(user_field)}")
+                user_form.save()
+            else:
+                form.validate()
         except Exception as e:
             print(f"Got error {e}")
             print(user_form.errors)
             print(user_form.non_field_errors())
+            raise e
         return redirect(reverse("sync-config"))
+
+class ShowRawEvents(LoginRequiredMixin, View):
+    def get(self, request, internal_id):
+        google_accounts = GoogleAccount.objects.filter(user = request.user)
+        calendar = UserCalendar.objects.filter(
+            user = request.user,
+            internal_calendar_id = internal_id).get()
+        events = calendar.get_changes()
+        return render(request, 'debug_raw.html', context={
+            "events": events})

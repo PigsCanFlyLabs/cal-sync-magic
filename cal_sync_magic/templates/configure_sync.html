@@ -57,6 +57,7 @@ Want to <a href="https://myaccount.google.com/permissions">revoke an account?</a
     <th>{{ cal.google_account.google_user_email }}</th>
     <th>{{ cal.name }}</th>
     <th>{{ cal.google_calendar_id }}</th>
+<!--    <th><a href="{% url 'view-calendar-raw-events' internal_id=cal.internal_calendar_id %}">{{ cal.google_calendar_id }}</a></th> -->
   </tr>
 {% endfor %}
 </table>
@@ -80,6 +81,7 @@ Missing a new calendar: <a href="{% url 'update-user-calendars' %}">Update calen
     </th>
     <th>
       <form action="{% url 'del-sync' %}" method="post" novalidate="novalidate">
+	{% csrf_token %}
 	<input type="hidden" name="id" value="{{ sync.id }}">
 	<input type="submit" value="Remove">
       </form>
