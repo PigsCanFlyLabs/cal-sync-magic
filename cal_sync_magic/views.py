@@ -1,17 +1,20 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.contrib.auth import get_user_model
-User=get_user_model()
 
 import google_auth_oauthlib
 from googleapiclient.discovery import build
 
 from cal_sync_magic.models import *
+
+User=get_user_model()
+
+
 
 
 def get_redirect_uri(request):
