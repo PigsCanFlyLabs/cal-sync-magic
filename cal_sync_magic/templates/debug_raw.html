@@ -1,0 +1,10 @@
+{% extends 'external-base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% for event in events %}
+{{ event  }} <br>
+{% endfor %}
+
+{% endblock content %}
