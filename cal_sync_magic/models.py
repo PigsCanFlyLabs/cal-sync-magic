@@ -125,8 +125,7 @@ class GoogleAccount(models.Model):
 
 
 class UserCalendar(models.Model):
-    @staticmethod
-    def hex_uuid():
+    def hex_uuid(): # type: ignore
         """Hecking MYSQL hex UUID issue."""
         return uuid.uuid4().hex
 
