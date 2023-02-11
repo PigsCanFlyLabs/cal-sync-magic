@@ -15,5 +15,6 @@ urlpatterns = [
     path("del-sync", views.DelSync.as_view(), name="del-sync"),
     path("add-cal-rule", views.AddCalendarRule.as_view(), name="add-cal-rule"),
     path("add-sync", views.AddSync.as_view(), name="add-sync"),
-    path("view-calendar-raw-events/<int:internal_id>", views.ShowRawEvents.as_view(), name="view-calendar-raw-events")
+    path("view-calendar-raw-events/<int:internal_id>", views.ShowRawEvents.as_view(), name="view-calendar-raw-events"),
+    path("google-callback", views.GoogleCallBack.as_view(), name="google-callback")
 ]

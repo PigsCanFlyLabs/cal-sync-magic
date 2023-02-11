@@ -156,3 +156,13 @@ class ShowRawEvents(LoginRequiredMixin, View):
         events = map(lambda x: json.dumps(x), calendar.get_changes())
         return render(request, 'debug_raw.html', context={
             "events": events})
+
+class GoogleCallBack(View):
+    def get(self, request):
+        channel_id = request.headers.get(
+            'X-Goog-Channel-ID',
+            request.GET.get("channel_id")
+        )
+        c = UserCalendar.objects.get(cal_uuid=channel_id)
+        c.handle_sync_event()
+        return HttpResponse("Ok!")
