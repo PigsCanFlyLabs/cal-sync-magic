@@ -125,6 +125,11 @@ class GoogleAccount(models.Model):
 
 
 class UserCalendar(models.Model):
+    @staticmethod
+    def hex_uuid():
+        """Hecking MYSQL hex UUID issue."""
+        return uuid.uuid4().hex
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -133,7 +138,7 @@ class UserCalendar(models.Model):
     google_account = models.ForeignKey(GoogleAccount, on_delete=models.CASCADE, null=False)
     google_calendar_id = models.CharField(max_length=500, null=False)
     uuid = models.UUIDField(
-        default=uuid.uuid4,
+        default=hex_uuid,
         editable=True,
         unique=True,
         primary_key=False)
