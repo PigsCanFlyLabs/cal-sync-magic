@@ -35,5 +35,3 @@ class TestGoogle(TestCase):
         # Follow false does not seem to work so set follow to true and check the rdr chain
         response = client.get(reverse(endpoint), follow=True)
         chain = response.redirect_chain
-
-
