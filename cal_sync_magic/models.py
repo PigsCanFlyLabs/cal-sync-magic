@@ -134,16 +134,18 @@ class UserCalendar(models.Model):
     google_calendar_id = models.CharField(max_length=500, null=False)
     uuid = models.UUIDField(
         default=uuid.uuid4,
-        editable=False,
+        editable=True,
         unique=True,
         primary_key=False)
     name = models.CharField(max_length=500, null=True, blank=True)
-    last_error = models.DateTimeField(null=True)
+    last_error = models.DateTimeField(null=True, blank=True)
     deleted = models.BooleanField(default=False)
     last_sync_token = models.CharField(max_length=500, null=True, blank=True)
     webhook_enabled = models.BooleanField(default=False) # See https://developers.google.com/calendar/api/guides/push
 
     def __str__(self):
+        if self.name is None:
+            return "None"
         return self.name
 
     def handle_event(self, event):
