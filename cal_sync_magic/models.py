@@ -136,11 +136,6 @@ class UserCalendar(models.Model):
     internal_calendar_id = models.AutoField(primary_key=True)
     google_account = models.ForeignKey(GoogleAccount, on_delete=models.CASCADE, null=False)
     google_calendar_id = models.CharField(max_length=500, null=False)
-    uuid = models.UUIDField(
-        default=hex_uuid,
-        editable=True,
-        unique=True,
-        primary_key=False)
     name = models.CharField(max_length=500, null=True, blank=True)
     last_error = models.DateTimeField(null=True, blank=True)
     deleted = models.BooleanField(default=False)

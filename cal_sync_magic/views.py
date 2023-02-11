@@ -163,6 +163,6 @@ class GoogleCallBack(View):
             'X-Goog-Channel-ID',
             request.GET.get("channel_id")
         )
-        c = UserCalendar.objects.get(cal_uuid=channel_id)
+        c = UserCalendar.objects.get(internal_calendar_id=channel_id)
         c.handle_sync_event()
         return HttpResponse("Ok!")
