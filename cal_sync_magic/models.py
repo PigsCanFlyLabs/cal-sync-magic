@@ -1,6 +1,7 @@
 import json
 import uuid
 from datetime import datetime, timedelta
+import requests
 
 from django import forms
 from django.conf import settings
@@ -14,6 +15,7 @@ import google.oauth2.credentials
 import pytz
 from dateutil.relativedelta import relativedelta
 from googleapiclient.discovery import build
+from google.oauth2.credentials import exceptions
 
 User = get_user_model()
 
@@ -79,6 +81,10 @@ class GoogleAccount(models.Model):
         return friendly_scopes
 
     def get_credentials(self):
+        """Get the credentials, try and refresh if needed, and if we can't refresh.
+        delete the credentials so we can trigger a re-add."""
+        if self.credentials is None:
+            return None
         stored_creds = json.loads(self.credentials)
         # Get expirery so we can figure out if we need a refresh
         if self.credential_expiry is not None:
@@ -89,9 +95,18 @@ class GoogleAccount(models.Model):
         # Drop timezone info
         stored_creds["expiry"] = stored_creds["expiry"].replace(tzinfo=None)
         user_credentials = google.oauth2.credentials.Credentials(**stored_creds)
-        if user_credentials.expired:
-            http_request = google.auth.transport.requests.Request()
-            user_credentials.refresh(http_request)
+        try:
+            if user_credentials.expired:
+                http_request = google.auth.transport.requests.Request()
+                user_credentials.refresh(http_request)
+        except exceptions.RefreshError:
+              revoke = requests.post(
+                  'https://oauth2.googleapis.com/revoke',
+                  params={'token': user_credentials.token},
+                  headers = {'content-type': 'application/x-www-form-urlencoded'})
+              self.credentials = None
+              self.save()
+              return None
         self.credentials = user_credentials.to_json()
         self.credential_expiry = user_credentials.expiry
         self.save()
