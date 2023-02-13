@@ -1,7 +1,6 @@
 import json
 import uuid
 from datetime import datetime, timedelta
-import requests
 
 from django import forms
 from django.conf import settings
@@ -13,9 +12,10 @@ from django.utils.timezone import activate
 import google.auth.transport.requests
 import google.oauth2.credentials
 import pytz
+import requests
 from dateutil.relativedelta import relativedelta
-from googleapiclient.discovery import build
 from google.oauth2.credentials import exceptions
+from googleapiclient.discovery import build
 
 User = get_user_model()
 
