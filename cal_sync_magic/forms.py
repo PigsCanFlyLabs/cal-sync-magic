@@ -1,6 +1,8 @@
-from cal_sync_magic.models import SyncConfigs, CalendarRules
-from django.core.validators import RegexValidator
 from django import forms
+from django.core.validators import RegexValidator
+
+from cal_sync_magic.models import CalendarRules, SyncConfigs
+
 
 # We use a regular form instead of model form because we want the account id (e.g. two users _could_ add the same google account
 # so this way we know were modifying the correct users google account).

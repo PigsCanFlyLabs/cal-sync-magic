@@ -10,8 +10,8 @@ from django.views import View
 import google_auth_oauthlib
 from googleapiclient.discovery import build
 
-from cal_sync_magic.models import *
 from cal_sync_magic.forms import *
+from cal_sync_magic.models import *
 
 User=get_user_model()
 
