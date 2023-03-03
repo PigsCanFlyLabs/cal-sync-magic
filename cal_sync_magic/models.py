@@ -116,15 +116,6 @@ class GoogleAccount(models.Model):
                 google_calendar_id=cal['id'],
                 defaults={"deleted": deleted, "name": cal['summary']})
 
-    def get_config_form(self):
-        f = UpdateGoogleAccountForm()
-        f.fields["account_id"].initial = self.account_id
-        f.fields["calendar_sync_enabled"].initial = self.calendar_sync_enabled
-        f.fields["second_chance_email"].initial = self.second_chance_email
-        f.fields["delete_events_from_email"].initial = self.delete_events_from_email
-        return f
-
-
     class Meta:
         app_label = "cal_sync_magic"
 

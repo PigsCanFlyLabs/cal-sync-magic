@@ -7,7 +7,7 @@
 Current accounts:
 </p>
 <table>
-{% for acc in google_accounts %}
+{% for acc, form in google_accounts %}
 <tr>
   <td>
     {{ acc.google_user_email }}
@@ -18,7 +18,7 @@ Current accounts:
   <td>
     <form action="{% url 'update-gaccount-settings' %}" method="post" novalidate="novalidate">
       {% csrf_token %}
-      {{ acc.get_config_form.as_div }}
+      {{ form.as_div }}
       <!--
       <input name="account_id" value="{{acc.account_id}}" type="hidden">
       <p><input type="checkbox" name="calendar_sync_enabled" {% if acc.calendar_sync_enabled %} checked {% endif %} > <label>Calendar Sync</label></p>

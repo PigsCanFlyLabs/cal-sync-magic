@@ -11,6 +11,7 @@ import google_auth_oauthlib
 from googleapiclient.discovery import build
 
 from cal_sync_magic.models import *
+from cal_sync_magic.forms import *
 
 User=get_user_model()
 
@@ -96,19 +97,31 @@ class UpdateGoogleAccounts(LoginRequiredMixin, View):
 
 class ConfigureSyncs(LoginRequiredMixin, View):
     def get(self, request):
+        def get_config_form(acc):
+            f = UpdateGoogleAccountForm()
+            f.fields["account_id"].initial = acc.account_id
+            f.fields["calendar_sync_enabled"].initial = acc.calendar_sync_enabled
+            f.fields["second_chance_email"].initial = acc.second_chance_email
+            f.fields["delete_events_from_email"].initial = acc.delete_events_from_email
+            return f
+
         google_accounts = GoogleAccount.objects.filter(user = request.user)
         calendars = UserCalendar.objects.filter(user = request.user)
         syncs = SyncConfigs.objects.filter(user = request.user)
         rules = CalendarRules.objects.filter(user = request.user)
+        add_sync_form = NewSyncForm(user=request.user, calendars=calendars)
+        add_cal_rule_form = NewCalRuleForm(calendars=calendars, user=request.user)
+        acc_forms = list(
+            map(lambda acc: (acc, get_config_form(acc)),
+                google_accounts))
         return render(request, 'configure_sync.html', context={
             'title': "Configure calendar syncing",
-            'google_accounts': google_accounts,
+            'google_accounts': acc_forms,
             'calendars': calendars,
             'syncs': syncs,
             'rules': rules,
-            'add_sync_form': NewSync(user=request.user, calendars=calendars),
-            'add_cal_rule_form': NewCalRule(calendars=calendars, user=request.user)
-            })
+            'add_sync_form': add_sync_form,
+            'add_cal_rule_form': add_cal_rule_form})
 
 
 class DelRule(LoginRequiredMixin, View):
@@ -127,7 +140,7 @@ class DelSync(LoginRequiredMixin, View):
 
 class AddCalendarRule(LoginRequiredMixin, View):
     def post(self, request):
-        user_form = NewCalRule(request.POST)
+        user_form = NewCalRuleForm(request.POST)
         if not user_form.is_valid():
             raise exception("Invalid form")
         if user_form.cleaned_data["user"] != self.request.user:
@@ -139,7 +152,7 @@ class AddCalendarRule(LoginRequiredMixin, View):
 class AddSync(LoginRequiredMixin, View):
     def post(self, request):
         calendars = UserCalendar.objects.filter(user = request.user)
-        user_form = NewSync(request.POST, user=request.user, calendars=calendars)
+        user_form = NewSyncForm(request.POST, user=request.user, calendars=calendars)
         if not user_form.is_valid():
             raise exception("Invalid form")
         if user_form.cleaned_data["user"] != self.request.user:

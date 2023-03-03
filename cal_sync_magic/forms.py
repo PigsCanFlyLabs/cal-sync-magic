@@ -1,3 +1,5 @@
+from cal_sync_magic.models import SyncConfigs, CalendarRules
+from django.core.validators import RegexValidator
 from django import forms
 
 # We use a regular form instead of model form because we want the account id (e.g. two users _could_ add the same google account
@@ -9,7 +11,7 @@ class UpdateGoogleAccountForm(forms.Form):
     delete_events_from_email = forms.BooleanField(label="Delete events based on email", required=False)
 
 
-class NewSync(forms.ModelForm):
+class NewSyncForm(forms.ModelForm):
     class Meta:
         model = SyncConfigs
         fields = ['src_calendars', 'sink_calendars', 'hide_details',
@@ -27,7 +29,7 @@ class NewSync(forms.ModelForm):
             user_field.validator = RegexValidator(regex=f"^{user}$")
 
 
-class NewCalRule(forms.ModelForm):
+class NewCalRuleForm(forms.ModelForm):
     class Meta:
         model = CalendarRules
         # Exclude the not yet implemented features
@@ -45,3 +47,5 @@ class NewCalRule(forms.ModelForm):
             user_field.initial = user
             user_field.widget = user_field.hidden_widget()
             user_field.validator = RegexValidator(regex=f"^{user}$")
+
+__all__ = ["NewCalRuleForm", "NewSyncForm", "UpdateGoogleAccountForm"]
