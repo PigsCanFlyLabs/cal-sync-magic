@@ -107,19 +107,19 @@ class ConfigureSyncs(LoginRequiredMixin, View):
 
         google_accounts = GoogleAccount.objects.filter(user = request.user)
         calendars = UserCalendar.objects.filter(user = request.user)
+        list(calendars)
         syncs = SyncConfigs.objects.filter(user = request.user)
         rules = CalendarRules.objects.filter(user = request.user)
         add_sync_form = NewSyncForm(user=request.user, calendars=calendars)
         add_cal_rule_form = NewCalRuleForm(calendars=calendars, user=request.user)
-        acc_forms = list(
-            map(lambda acc: (acc, get_config_form(acc)),
-                google_accounts))
+        acc_forms = map(lambda acc: (acc, get_config_form(acc)),
+                        google_accounts)
         return render(request, 'configure_sync.html', context={
             'title': "Configure calendar syncing",
-            'google_accounts': acc_forms,
-            'calendars': calendars,
-            'syncs': syncs,
-            'rules': rules,
+            'google_accounts': list(acc_forms),
+            'calendars': list(calendars),
+            'syncs': list(syncs),
+            'rules': list(rules),
             'add_sync_form': add_sync_form,
             'add_cal_rule_form': add_cal_rule_form})
 
