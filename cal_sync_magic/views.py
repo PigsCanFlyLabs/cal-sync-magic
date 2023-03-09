@@ -145,6 +145,9 @@ class AddCalendarRule(LoginRequiredMixin, View):
             raise exception("Invalid form")
         if user_form.cleaned_data["user"] != self.request.user:
             raise Exception(f"user mismatch")
+        address = request.build_absolute_uri(reverse('google-callback'))
+        for c in user_form.cleaned_data["calendars"]:
+            c.subscribe_if_needed(address=address)
         user_form.save()
         return redirect(reverse("sync-config"))
 
@@ -157,6 +160,9 @@ class AddSync(LoginRequiredMixin, View):
             raise exception("Invalid form")
         if user_form.cleaned_data["user"] != self.request.user:
             raise Exception(f"user mismatch")
+        address = request.build_absolute_uri(reverse('google-callback'))
+        for c in user_form.cleaned_data["src_calendars"]:
+            c.subscribe_if_needed(address=address)
         user_form.save()
         return redirect(reverse("sync-config"))
 
@@ -176,6 +182,7 @@ class GoogleCallBack(View):
             'X-Goog-Channel-ID',
             request.GET.get("channel_id")
         )
+        internal_calendar_id = channel_id.split("-")[0]
         c = UserCalendar.objects.get(internal_calendar_id=channel_id)
         c.handle_sync_event()
         return HttpResponse("Ok!")
