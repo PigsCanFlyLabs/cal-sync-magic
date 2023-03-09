@@ -180,7 +180,7 @@ class UserCalendar(models.Model):
     def get_changes(self):
         """Get the event changes since the last sync. This _may_ return all calendar events.
         See https://developers.google.com/calendar/api/guides/sync"""
-        calendar_service = self.google_account.calendar_service()p
+        calendar_service = self.google_account.calendar_service()
         # Make initial events request
         now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
         timeMax = (datetime.utcnow() + relativedelta(years=50)).isoformat() + 'Z'
@@ -216,7 +216,7 @@ class UserCalendar(models.Model):
         return f"{self.internal_calendar_id}-{self.google_calendar_id}"
 
     def subscribe_if_needed(self, address):
-        if (!self.webhook_enabled):
+        if not self.webhook_enabled:
             self.webhook_enabled = True
             calendar_service = self.google_account.calendar_service()
             calendar_service.events().watch(
